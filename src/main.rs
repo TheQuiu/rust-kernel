@@ -3,24 +3,17 @@
 
 mod vga;
 
-use crate::vga::writer::WRITER;
 use core::panic::PanicInfo;
 
 #[panic_handler]
-fn panic(_info: &PanicInfo) -> ! {
+fn panic(info: &PanicInfo) -> ! {
+    println!("Core died: {}", info);
     loop {}
 }
 
 #[no_mangle]
 pub extern "C" fn _start() -> ! {
-    print_hello();
+    println!("Hello, World!");
     loop {}
 }
 
-fn print_hello() {
-    use core::fmt::Write;
-    WRITER.lock().write_str("Hello again").unwrap();
-    write!(WRITER.lock(), ", some numbers: {} {}", 42, 1.337).unwrap();
-
-    loop {}
-}
