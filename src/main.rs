@@ -4,8 +4,10 @@
 mod vga;
 mod device;
 
+use core::arch::asm;
 use core::panic::PanicInfo;
-use crate::device::cpu::CpuId;
+use crate::device::cpu::{get_processor_name, print_cpu_vendor};
+use crate::vga::writer::DEFAULT_WRITER;
 
 #[panic_handler]
 fn panic(info: &PanicInfo) -> ! {
@@ -16,13 +18,14 @@ fn panic(info: &PanicInfo) -> ! {
 #[no_mangle]
 pub extern "C" fn _start() -> ! {
     println!("Starting kernel...");
-    let cpu = unsafe { CpuId::new() };
+    unsafe {
+        let cpu_vendor = print_cpu_vendor();
+        println!("[CPUID] CPU Vendor: ");
+        cpu_vendor.iter().for_each(|char| print!("{}", char));
 
-    let cpu_vendor = cpu.print_cpu_vendor();
-    println!("[CPUID] CPU Vendor: ");
-    cpu_vendor.iter().for_each(|char| print!("{}", char));
-
-
+        println!("\n[CPUID] CPU Name: ");
+        get_processor_name().iter().for_each(|byte| DEFAULT_WRITER.lock().write_byte(*byte));
+    }
 
     loop {}
 }
