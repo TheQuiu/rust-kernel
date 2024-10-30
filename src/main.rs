@@ -1,13 +1,14 @@
+#![feature(abi_x86_interrupt)]
 #![no_std]
 #![no_main]
 
 mod vga;
 mod device;
+mod interrupt;
 
-use core::arch::asm;
+use crate::device::cpu::{get_processor_name_str, get_processor_vendor_str};
+use crate::interrupt::idt;
 use core::panic::PanicInfo;
-use crate::device::cpu::{get_processor_name, print_cpu_vendor};
-use crate::vga::writer::DEFAULT_WRITER;
 
 #[panic_handler]
 fn panic(info: &PanicInfo) -> ! {
@@ -18,13 +19,12 @@ fn panic(info: &PanicInfo) -> ! {
 #[no_mangle]
 pub extern "C" fn _start() -> ! {
     println!("Starting kernel...");
-    unsafe {
-        let cpu_vendor = print_cpu_vendor();
-        println!("[CPUID] CPU Vendor: ");
-        cpu_vendor.iter().for_each(|char| print!("{}", char));
 
-        println!("\n[CPUID] CPU Name: ");
-        get_processor_name().iter().for_each(|byte| DEFAULT_WRITER.lock().write_byte(*byte));
+    idt::init_idt();
+
+    unsafe {
+        println!("[CPUID] CPU Vendor: {:?}", get_processor_vendor_str());
+        println!("[CPUID] CPU Name: {:?}", get_processor_name_str());
     }
 
     loop {}
